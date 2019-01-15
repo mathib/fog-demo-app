@@ -1,0 +1,70 @@
+body {
+    font-family: Monospace;
+    background-color: #000000;
+    margin: 0px;
+    overflow: hidden;
+}
+
+#info {
+    color: #fff;
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    text-align: center;
+    z-index: 100;
+    display: block;
+}
+
+div.floating {
+    color : #ffffff;
+    background : #000000;
+    opacity : 0.8;
+    width : 80%;
+    height : 80%;
+    position : absolute;
+    left : 10%;
+    top : 10%;
+    border : 1px solid #555555;
+    padding : 10px;
+    display : none;
+    overflow : auto;
+    z-index: 100;
+}
+
+span.link {
+    color: skyblue;
+    cursor: pointer;
+    text-decoration : underline;
+}
+
+a {
+    color: skyblue
+}
+
+/*spin.css animation - https://github.com/fgnass/spin.js/blob/master/spin.css */
+@keyframes spinner-line-fade-more {
+    0%, 100% {
+      opacity: 0; /* minimum opacity */
+    }
+    1% {
+      opacity: 1;
+    }
+}
+  
+@keyframes spinner-line-fade-quick {
+    0%, 39%, 100% {
+      opacity: 0.25; /* minimum opacity */
+    }
+    40% {
+      opacity: 1;
+    }
+}
+
+@keyframes spinner-line-fade-default {
+    0%, 100% {
+      opacity: 0.22; /* minimum opacity */
+    }
+    1% {
+      opacity: 1;
+    }
+}
