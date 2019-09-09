@@ -3,28 +3,71 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 // content of request
-const URL_GRAPHDB = "https://rdf.ontotext.com/4132505724/fog-demo2/repositories/fog-demo2"; //read-only endpoint for cloud DB
-let headers = new Headers();
-headers = {
-	"Accept":"application/sparql-results+json", // json expected instead of default xml
-	"Content-Type":"application/x-www-form-urlencoded",
-};
+// const URL_GRAPHDB = "https://rdf.ontotext.com/4132505724/fog-demo2/repositories/fog-demo2"; //read-only endpoint for cloud DB
+// let headers = new Headers();
+// headers = {
+// 	"Accept":"application/sparql-results+json", // json expected instead of default xml
+// 	"Content-Type":"application/x-www-form-urlencoded",
+// };
 const query1 = `### Query 1 (query sparql-visualizer tab 2)
 ### select all geometry (without reasoning)
 
 PREFIX omg: <https://w3id.org/omg#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX fog: <https://w3id.org/fog#>
 
 SELECT ?value ?property ?datatype WHERE {
+#SELECT ?geometry ?property ?datatype WHERE{
 	?geometry ?property ?value ;
 		a omg:Geometry .
-	GRAPH <http://ontologies.org/fog/>{
-		?property rdfs:subPropertyOf* ?omgProp .
-		FILTER (?omgProp IN (omg:hasSimpleGeometryDescription , omg:hasComplexGeometryDescription)) .
+	# inefficient UNION needed as no reasoning is available and property paths querying is not possible in Comunica
+	{ 
+		?property rdfs:subPropertyOf ?omgProp 
+	} UNION {
+		?property rdfs:subPropertyOf ?subProp1 .
+		?subProp1 rdfs:subPropertyOf ?omgProp .
+	} UNION {
+		?property rdfs:subPropertyOf ?subProp1 .
+		?subProp1 rdfs:subPropertyOf ?subProp2 .
+		?subProp2 rdfs:subPropertyOf ?omgProp .
 	}
+	
+	FILTER (?omgProp IN (omg:hasSimpleGeometryDescription , omg:hasComplexGeometryDescription)) .
 	BIND(DATATYPE(?value) AS ?datatype)
 }`;
+// next query is less generic but much faster (no expensive UNIONs)
+const query1a = `### Query 1a (query sparql-visualizer tab 2)
+### select all geometry (without reasoning)
+
+PREFIX omg: <https://w3id.org/omg#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX fog: <https://w3id.org/fog#>
+
+SELECT ?value ?property ?datatype WHERE {
+#SELECT ?geometry ?property ?datatype WHERE{
+	?geometry ?property ?value ;
+		a omg:Geometry .
+	FILTER (?property IN (fog:asGltf_v2.0-glb , fog:asPly_v1.0-binaryLE , fog:asCollada_v1.4.1 , fog:asGltf_v2.0-gltf , fog:asPly_v1.0-ascii , fog:asObj_v3.0-obj , fog:asStep , fog:asGeomOntology , fog:asE57_v1.0)) .
+	BIND(DATATYPE(?value) AS ?datatype)
+}`;
+// const query1 = `### Query 1 (query sparql-visualizer tab 2)
+// ### select all geometry (without reasoning)
+
+// PREFIX omg: <https://w3id.org/omg#>
+// PREFIX owl: <http://www.w3.org/2002/07/owl#>
+// PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+// SELECT ?value ?property ?datatype WHERE {
+// 	?geometry ?property ?value ;
+// 		a omg:Geometry .
+// 	GRAPH <http://ontologies.org/fog/>{
+// 		?property rdfs:subPropertyOf* ?omgProp .
+// 		FILTER (?omgProp IN (omg:hasSimpleGeometryDescription , omg:hasComplexGeometryDescription)) .
+// 	}
+// 	BIND(DATATYPE(?value) AS ?datatype)
+// }`;
 const query2 = `### Query 2 (query sparql-visualizer tab 4)
 ### select all geometry of column2 (without reasoning)
 
@@ -73,18 +116,20 @@ SELECT ?value ?property ?datatype WHERE {
 	FILTER (?property IN (fog:asObj_v3.0-obj , fog:asPly_v1.0-ascii))
    	BIND(DATATYPE(?value) AS ?datatype)
 }`;
-const body1 = {
-	query: query1,
-	infer: false, // query does not need reasoning
-};
-const options1 = {
-	method: 'POST',
-	headers:headers,
-	body:JSON_to_URLEncoded(body1), // turn JSON body into x-www-form-urlencoded
-};
+// const body1 = {
+// 	query: query1,
+// 	infer: false, // query does not need reasoning
+// };
+// const options1 = {
+// 	method: 'POST',
+// 	headers:headers,
+// 	body:JSON_to_URLEncoded(body1), // turn JSON body into x-www-form-urlencoded
+// };
+const sources = [ { type: 'hypermedia' , value: 'http://localhost:3000/sample_abox_full_local.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
 
 // send query1 to triplestore until response
-fetchPromise(URL_GRAPHDB, options1); // initial query is send
+//fetchPromise(URL_GRAPHDB, options1); // initial query is send
+queryComunica(query1a , sources);
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Setup three.js scene + camera + renderer + controls
@@ -171,8 +216,8 @@ var queryButton3 = document.getElementById('query3');
 queryButton3.addEventListener('click', function(){loadNewGeometry(query3)});
 
 // start loading animation // source: https://spin.js.org/
-var target = document.getElementById('spinner');
-var spinner = new Spinner({color:'#000000', lines: 12 , scale: 3}).spin(target);
+// var target = document.getElementById('spinner');
+// var spinner = new Spinner({color:'#000000', lines: 12 , scale: 3}).spin(target);
 
 //////////////////////////////////////////////////////////////////////////////////////
 // alternative 3D controls - trackball
@@ -239,26 +284,26 @@ function animationLoop(){
 }
 
 // function to turn JSON body into x-www-form-urlencoded //source: https://gist.github.com/lastguest/1fd181a9c9db0550a847 // used
-function JSON_to_URLEncoded(element,key,list){ 
-	var list = list || [];
-	if(typeof(element)=='object'){
-	  for (var idx in element)
-		JSON_to_URLEncoded(element[idx],key?key+'['+idx+']':idx,list);
-	} else {
-	  list.push(key+'='+encodeURIComponent(element));
-	}
-	return list.join('&');
-}
+// function JSON_to_URLEncoded(element,key,list){ 
+// 	var list = list || [];
+// 	if(typeof(element)=='object'){
+// 	  for (var idx in element)
+// 		JSON_to_URLEncoded(element[idx],key?key+'['+idx+']':idx,list);
+// 	} else {
+// 	  list.push(key+'='+encodeURIComponent(element));
+// 	}
+// 	return list.join('&');
+// }
 
 // function to treat geometry accordingly to its datatype + provide download button
 function decodeGeometry (element){
 	// bind variables
-	var p = element.property.value;
-	var v = element.value.value;
-	if ( !element.datatype){ // datatype variable does not exist in case of node instead of RDF literal (RDF-based geometry)
+	var p = element['?property'].value;
+	var v = element['?value'].value;
+	if ( element['?datatype'] == null ){ // datatype variable IS UNDEFINED in case of node instead of RDF literal (RDF-based geometry)
 		var d = "";
 	} else {
-		var d = element.datatype.value;
+		var d = element['?datatype'].value;
 	}
 	var fogProp = p.replace('https://w3id.org/fog#', 'fog:');
 	// action decoder depends on datatype
@@ -352,7 +397,7 @@ function switchGeometryType ( p , vPrepared , d ){
 			} else {
 				//three.js somehow fails to load Collada from a string
 				console.log("Geometry format of datatype " + d + " cannot be loaded: " + fogProp);
-				createDownloadButton( 'downloadCollada' , fogProp , function() { saveString( element.v.value , 'colladaFile.dae' )} );
+				createDownloadButton( 'downloadCollada' , fogProp , function() { saveString( element['?value'].value , 'colladaFile.dae' )} ); // MB: add vPrepared instead of direct element.value?
 				createNotLoadedTag( fogProp );
 			}
 			break;
@@ -492,6 +537,20 @@ function saveBinary ( data , filename) {
 // functions: query triplestore
 //////////////////////////////////////////////////////////////////////////////////////
 
+// function sending SPARQL query over Comunica
+function queryComunica( query , sources){
+	Comunica.newEngine()
+		.query(query,
+			{sources: sources})
+		.then( function( result ){
+			console.log("query succeed");
+			result.bindingsStream.on('data', function (data) { // for every result (stream) do:
+				decodeGeometry(data.toObject());
+			});
+			//spinner.stop();
+		});
+};
+
 // function that keeps sending request until response is returned // spirce: https://davidwalsh.name/fetch-timeout
 function fetchPromise(url,ops){
 	const FETCH_TIMEOUT = 15000;
@@ -575,16 +634,17 @@ function loadNewGeometry(query){
 	// update view of active query
 	queryButton.addEventListener('click', function() { renderQuery(query); });
 	// send request to triplestore with selected query
-	const body = {
-		query: query,
-		infer: false, // queries do not need reasoning
-	};
-	const options = {
-		method: 'POST',
-		headers:headers,
-		body:JSON_to_URLEncoded(body), // turn JSON body into x-www-form-urlencoded
-	};
-	fetchPromise(URL_GRAPHDB,options);
+	// const body = {
+	// 	query: query,
+	// 	infer: false, // queries do not need reasoning
+	// };
+	// const options = {
+	// 	method: 'POST',
+	// 	headers:headers,
+	// 	body:JSON_to_URLEncoded(body), // turn JSON body into x-www-form-urlencoded
+	// };
+	//fetchPromise(URL_GRAPHDB,options);
+	queryComunica( query , sources );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
