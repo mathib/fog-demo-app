@@ -125,10 +125,12 @@ SELECT ?value ?property ?datatype WHERE {
 // 	headers:headers,
 // 	body:JSON_to_URLEncoded(body1), // turn JSON body into x-www-form-urlencoded
 // };
-const sources = [ { type: 'hypermedia' , value: 'http://localhost:3000/sample_abox_full_local.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
+//const sources = [ { type: 'hypermedia' , value: 'http://localhost:3000/sample_abox_full_local.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
+const sources = [ { type: 'file' , value: 'https://raw.githubusercontent.com/mathib/fog-ontology/master/examples/sample_abox_full.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
 
-// send query1 to triplestore until response
-//fetchPromise(URL_GRAPHDB, options1); // initial query is send
+THREE.Object3D.DefaultUp.set( 0 , 0 , 1 );
+
+// send query1 to Comunica - intial query
 queryComunica(query1a , sources);
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -139,9 +141,9 @@ queryComunica(query1a , sources);
 var scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xf0f0f0 );
 
-// Create a basic perspective camera- TODO: zoom to fit objects
+// Create a basic perspective camera
 var camera = new THREE.PerspectiveCamera( 10, window.innerWidth/window.innerHeight, 1, 5000 );
-camera.position.set(10, 5, 50); //vector of camera (viewdirection from this point to origin)
+camera.position.set(10, 10, 10); //vector of camera (viewdirection from this point to origin)
 
 // Create a renderer with Antialiasing
 var renderer = new THREE.WebGLRenderer({antialias:true});
@@ -152,6 +154,9 @@ renderer.setSize( window.innerWidth, window.innerHeight );
 // Append Renderer to DOM
 //container.body.appendChild( renderer.domElement );
 document.body.appendChild( renderer.domElement );
+
+//listen to keypresses
+window.addEventListener( 'keypress', keyboard );
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Setup DAT.GUI
@@ -223,7 +228,7 @@ queryButton3.addEventListener('click', function(){loadNewGeometry(query3)});
 // alternative 3D controls - trackball
 //////////////////////////////////////////////////////////////////////////////////////
 
-var controls = new THREE.TrackballControls( camera );
+var controls = new THREE.TrackballControls( camera ); // alternative is OrbitControls
 controls.rotateSpeed = 5.0;
 controls.zoomSpeed = 3.2;
 controls.panSpeed = 0.1;
@@ -233,12 +238,21 @@ controls.staticMoving = false;
 controls.dynamicDampingFactor = 0.2;
 
 //////////////////////////////////////////////////////////////////////////////////////
-// Additional three.js features: axis + lights
+// Additional three.js features: axis + lights + gridhelper
 //////////////////////////////////////////////////////////////////////////////////////
 
 // add axis to scene
-var axisHelper = new THREE.AxesHelper( 5 ); // default Y-up (green) <=> Z (blue) and X (red)
+var axisHelper = new THREE.AxesHelper( 5 ); // X (red) // Y (green) // Z (blue)
 scene.add( axisHelper );
+
+// gridhelper
+var gridHelperXZ = new THREE.GridHelper( 10 , 10 );
+var gridHelperXY = gridHelperXZ.clone();
+// var gridHelperYZ = gridHelperXZ.clone();
+gridHelperXY.rotateX(-Math.PI/2);
+// gridHelperYZ.rotateZ(-Math.PI/2);
+// scene.add( gridHelperXZ , gridHelperXY , gridHelperYZ );
+scene.add( gridHelperXY );
 
 // lights
 var light = new THREE.DirectionalLight( 0xffffff ); //white
@@ -515,7 +529,8 @@ function switchGeometryType ( p , vPrepared , d ){
 			};
 			elementCounter++;
 			createNotLoadedTag( fogProp );
-	}
+	};
+	zoomToLoaded();
 }
 
 // function helping with saving to text file
@@ -531,6 +546,78 @@ function saveBinary ( data , filename) {
 	link.href = "data:application/plain;charset=utf-8," + data;
 	link.download = filename;
 	link.click();
+}
+
+// function to zoom extend based on "e" keyboard entry OR set vertical up for trackball on "u" keyboard entry
+function keyboard( ev ) {
+	const e = ev.key || String.fromCharCode( ev.keyCode || ev.charCode );
+	const selection = [];
+	if ( e == 'e'){
+		scene.traverse(function(child){
+			if (child instanceof THREE.Mesh){ // find all loaded meshes (ignores axis helpers)
+				selection.push(child);
+				//child.material = new THREE.MeshStandardMaterial( { color: colorNew } ); //blue (glb) or red (gltf)
+			}
+		});
+		if (selection.length > 0) zoomCameraToSelection(camera, controls, selection);
+	} else if ( e == 'u' ){
+		controls.object.up = new THREE.Vector3( 0 , 0 , 1);
+	}
+}
+
+// function for zoom extend when new geometry is loaded
+function zoomToLoaded() {
+	const selection = [];
+	scene.traverse(function(child){
+		if (child instanceof THREE.Mesh){ // find all loaded meshes (ignores axis helpers)
+			selection.push(child);
+			//child.material = new THREE.MeshStandardMaterial( { color: colorNew } ); //blue (glb) or red (gltf)
+		}
+	});
+	if (selection.length > 0) zoomCameraToSelection(camera, controls, selection);
+}
+
+// function to zoom camera to selected geometry - based on code: https://codepen.io/looeee/pen/vwVeZB.js // https://codepen.io/looeee/full/vwVeZB
+function zoomCameraToSelection(camera, controls, selection, fitRatio = 1.2) {
+	const box = new THREE.Box3(); //boundingbox
+  
+	for (const object of selection) box.expandByObject(object);
+  
+	const size = box.getSize(new THREE.Vector3());
+	const center = box.getCenter(new THREE.Vector3());
+  
+	const maxSize = Math.max(size.x, size.y, size.z);
+	const fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * camera.fov / 360));
+	const fitWidthDistance = fitHeightDistance / camera.aspect;
+	const distance = fitRatio * Math.max(fitHeightDistance, fitWidthDistance);
+  
+	const direction = controls.target.clone().
+	sub(camera.position).
+	normalize().
+	multiplyScalar(distance);
+  
+	controls.maxDistance = distance * 100;
+	controls.target.copy(center);
+  
+	camera.near = distance / 100;
+	camera.far = distance * 100;
+
+	camera.updateProjectionMatrix();
+  
+	camera.position.copy(controls.target).sub(direction);
+  
+	// added for trackball controls: set vertical up axis along Z-axis
+	controls.object.up = new THREE.Vector3( 0 , 0 , 1);
+
+	controls.update();
+}
+
+// function to switch from Y-up geometry to Z-up geometry
+function toZup( mesh ){
+	var transformationMatrix = new THREE.Matrix4();
+	transformationMatrix.makeRotationZ(Math.PI/2);
+	transformationMatrix.makeRotationX(Math.PI/2);
+	mesh.applyMatrix(transformationMatrix);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -693,10 +780,6 @@ function loadThisGLTF( pathToJSON, color ){
 					child.material = new THREE.MeshStandardMaterial( { color: color } ); //blue (glb) or red (gltf)
 				}
 			});
-			// translate to a place closer to the origin
-			gltf.scene.translateX(-45);
-			gltf.scene.translateY(-15);
-			gltf.scene.translateZ(15);
 			// add to scene
 			scene.add( gltf.scene );
 			console.log("GLTF/GLB loaded");
@@ -718,12 +801,9 @@ function loadThisOBJ( pathToOBJ, color ){
 			objFile.traverse( function ( child ) {
 				if (child.isMesh){
 					child.material = new THREE.MeshStandardMaterial( { color: color} ); //green
+					toZup(child); // should be included in RDF that this is Y-up geometry
 				}
 			});
-			// translate to a place closer to the origin
-			objFile.translateX(-45);
-			objFile.translateY(-15);
-			objFile.translateZ(15);
 			// add to scene
 			scene.add( objFile );
 			console.log("OBJ loaded");
@@ -745,12 +825,10 @@ function loadThisCollada( pathToCollada, color ){
 			colladaFile.scene.traverse( function ( child ) {
 				if (child.isMesh){
 					child.material = new THREE.MeshStandardMaterial( { color: color } ); //purple
+					toZup(child); // should be included in RDF that this is Y-up geometry
 				}
 			});
-			// translate to a place closer to the origin
-			colladaFile.scene.translateX(-45);
-			colladaFile.scene.translateY(-15); // Collada export from Rhino: Y = negative threejs Z
-			colladaFile.scene.translateZ(-15); // Collada export from Rhino: Z = threejs Y (up-axis)
+			// colladaFile.scene.rotateX(Math.PI/2);
 			// add to scene
 			scene.add( colladaFile.scene );
 			console.log("COLLADA loaded");
@@ -771,11 +849,6 @@ function loadThisPLY( pathToPLY, color ){
 			// create mesh with colored material
 			var plyMaterial = new THREE.MeshStandardMaterial( { color: color } ); // cyan (ascii ply) or orange (binaryLE) // PLY does not contain material
 			var plyMesh = new THREE.Mesh ( plyGeometry, plyMaterial );
-			// translate to a place closer to the origin
-			plyMesh.translateX(-45);
-			plyMesh.translateY(-15);
-			plyMesh.translateZ(15);
-			plyMesh.rotateX(-Math.PI/2); // all PLY models have to be rotated 90° around x axis if coming from MeshLab
 			// add to scene
 			scene.add( plyMesh );
 			console.log("PLY loaded");
@@ -786,6 +859,18 @@ function loadThisPLY( pathToPLY, color ){
 		function( err ) { console.log( 'An error happened' ); }
 	)
 };
+
+// function to load PCD point cloud
+function loadThisPCD( pathToPCD ){
+	var loader = new THREE.PCDLoader();
+	loader.load( 
+		pathToPCD, 
+		function ( points ) {
+			points.name = 'pointcloud';
+			scene.add( points );
+		} 
+	);
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 // functions: geometry STRING loaders - from RDF literals containing embedded geometry
@@ -799,12 +884,9 @@ function loadThisOBJString( data , color ){
 	myObject.traverse( function ( child ) {
 		if (child.isMesh){
 			child.material = new THREE.MeshStandardMaterial( { color: color} ); //green
+			toZup(child); // should be included in RDF that this is Y-up geometry
 		}
 	});
-	// translate to a place closer to the origin
-	myObject.translateX(-45);
-	myObject.translateY(-15);
-	myObject.translateZ(15);
 	// add to scene
 	scene.add(myObject);
 	console.log("OBJ loaded from string");
@@ -815,11 +897,6 @@ function loadThisPLYString( data , color ){
 	plyGeometry = loader.parse(data);
 	var plyMaterial = new THREE.MeshStandardMaterial( { color: color } ); //orange (binaryLE) or cyan (ascii) // PLY does not contain material
 	var plyMesh = new THREE.Mesh ( plyGeometry , plyMaterial );
-	// translate to a place closer to the origin
-	plyMesh.translateX(-45);
-	plyMesh.translateY(-15);
-	plyMesh.translateZ(15);
-	plyMesh.rotateX(-Math.PI/2); // all PLY models have to be rotated 90° around x axis if coming from MeshLab
 	// add to scene
 	scene.add(plyMesh);
 	console.log("PLY loaded from string");
@@ -832,12 +909,9 @@ function loadThisGltfString ( data , color ){
 		gltf.scene.traverse(function(child){
 			if (child instanceof THREE.Mesh){
 				child.material = new THREE.MeshStandardMaterial( { color: color } ); //red (gltf) or blue (glb)
+				toZup(child); // should be included in RDF that this is Y-up geometry
 			}
 		});
-		// translate to a place closer to the origin
-		gltf.scene.translateX(-45);
-		gltf.scene.translateY(-15);
-		gltf.scene.translateZ(15);
 		// add to scene
 		scene.add (gltf.scene);
 	});
