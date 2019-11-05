@@ -126,7 +126,7 @@ SELECT ?value ?property ?datatype WHERE {
 // 	body:JSON_to_URLEncoded(body1), // turn JSON body into x-www-form-urlencoded
 // };
 //const sources = [ { type: 'hypermedia' , value: 'http://localhost:3000/sample_abox_full_local.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
-const sources = [ { type: 'file' , value: 'https://raw.githubusercontent.com/mathib/fog-ontology/master/examples/sample_abox_full.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
+const sources = [ { type: 'file' , value: 'https://raw.githubusercontent.com/mathib/fog-ontology/master/examples/sample_abox_columns.ttl' } , { type: 'file' , value: 'https://w3id.org/fog/fog.ttl' } ];
 
 THREE.Object3D.DefaultUp.set( 0 , 0 , 1 );
 
