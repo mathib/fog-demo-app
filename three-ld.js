@@ -228,7 +228,7 @@ queryButton3.addEventListener('click', function(){loadNewGeometry(query3)});
 // alternative 3D controls - trackball
 //////////////////////////////////////////////////////////////////////////////////////
 
-var controls = new THREE.TrackballControls( camera ); // alternative is OrbitControls
+var controls = new THREE.TrackballControls( camera ,  renderer.domElement ); // alternative is OrbitControls
 controls.rotateSpeed = 5.0;
 controls.zoomSpeed = 3.2;
 controls.panSpeed = 0.1;
