@@ -303,9 +303,7 @@ animationLoop();
 // initialize clipping plane
 createClippingPlane(); // parallel to XZ plane
 
-// openNav( 'introNav' );
-// openNav( 'settingsNav' );
-openNav( 'sourcesNav' );
+openNav( 'introNav' );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1355,7 +1353,7 @@ function arrangeGeometryQuery(){
 // function to execute query over selected comunica sources
 function querySelectedComunicaSources( sources ) { 
 	queryEngine
-		.query( _querySupported , { sources: sources } ) // _queryAll _querySupported_SizeFilteredAndUnknownSize
+		.query( _querySupported_SizeFilteredAndUnknownSize , { sources: sources } ) // _queryAll _querySupported
 		.then( function( result ) {
 			result.bindingsStream.on( 'data', function( data ) { // for every result (stream) do:
 				decodeGeometry( data.toObject() );
