@@ -1,45 +1,46 @@
+/* base layout for three-js app */
 body {
-    font-family: Monospace;
-    background-color: #000000;
-    margin: 0px;
-    overflow: hidden;
+  /* font-family: Monospace; */
+  background-color: #000000;
+  margin: 0px;
+  overflow: hidden;
 }
 
-#info {
-    color: #fff;
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    text-align: center;
-    z-index: 100;
-    display: block;
-}
+/* #info {
+  color: #fff;
+  position: absolute;
+  top: 10px;
+  width: 100%;
+  text-align: center;
+  z-index: 100;
+  display: block;
+} */
 
-div.floating {
-    color : #ffffff;
-    background : #000000;
-    opacity : 0.8;
-    width : 80%;
-    height : 80%;
-    position : absolute;
-    left : 10%;
-    top : 10%;
-    border : 1px solid #555555;
-    padding : 10px;
-    display : none;
-    overflow : auto;
-    z-index: 100;
-}
+/* div.floating {
+  color : #ffffff;
+  background : #000000;
+  opacity : 0.8;
+  width : 80%;
+  height : 80%;
+  position : absolute;
+  left : 10%;
+  top : 10%;
+  border : 1px solid #555555;
+  padding : 10px;
+  display : none;
+  overflow : auto;
+  z-index: 100;
+} */
 
 span.link {
-    color: skyblue;
-    cursor: pointer;
-    text-decoration : underline;
+  color: skyblue;
+  cursor: pointer;
+  text-decoration : underline;
 }
 
-a {
-    color: skyblue
-}
+/* a {
+  color: skyblue
+} */
 
 /*spin.css animation - https://github.com/fgnass/spin.js/blob/master/spin.css */
 @keyframes spinner-line-fade-more {
@@ -67,4 +68,301 @@ a {
     1% {
       opacity: 1;
     }
+}
+
+/* layout buttons */
+.dropbtn , .removeOptionbtn , .addOptionbtn {
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.dropbtn , .removeOptionbtn { 
+  min-width: 300px;
+  margin: 5px 2.5px;    
+}
+.dropbtn { background-color: rgb(110, 110, 110); }
+.removeOptionbtn { background-color: rgb(160, 33, 33); }
+.addOptionbtn { 
+  background-color: #4CAF50; 
+  width: 280px;
+  margin-top: 10px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  width: 300px;
+  z-index: 1;
+  margin-top: -4.5px;
+  margin-left: 2.5px;
+}
+
+.dropdown-content a , option {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+  /* only works in chrome */
+  white-space: pre-wrap;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+.dropdown-content option:hover {background-color: #ddd;}
+
+.dropdown:hover .dropdown-content {display: block;}
+
+.dropdown:hover .dropbtn {background-color: rgb(97, 94, 94);}
+.addOptionbtn:hover {background-color: #3e8e41;}
+.removeOptionbtn:hover {background-color: rgb(114, 6, 6);}
+
+/* curtain menu */
+.overlay {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: rgba(0,0,0, 0.9); 
+  overflow-x: hidden;
+  transition: 0.5s;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+}
+
+.overlay-content {
+  /* position: relative; */
+  width: 100%;
+  text-align: center;
+}
+
+.overlay-text {
+  font-family: arial, sans-serif;
+  color: white;
+  position: absolute;
+  top: 10%;
+  left: 20%;
+  right: 20%;
+  text-align: justify;
+}
+
+.overlay-text a{
+  /* color: rgb(167, 167, 167); */
+  font-style: italic;
+  color: white;
+}
+.overlay-text a:hover{
+  color:lightblue;
+}
+
+#settingsNav {
+  background-color: rgba(0,0,0, 0.6); 
+}
+
+.overlay .closebtn {
+  position: absolute;
+  top: 20px;
+  right: 45px;
+  font-size: 60px;
+  padding: 8px;
+  text-decoration: none;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.closebtn:hover , .closebtn:focus {
+  color: #f1f1f1;
+}
+
+/* general styling */
+input[type=text] {
+    width: 280px;
+    padding: 8px 8px;
+    margin: 8px 0;
+    display: block;
+}
+
+/* other styling */
+div.createNewDatasource {
+    padding: 10px;
+    width: 280px;
+    background: rgb(128, 206, 130);
+    display: inline-block;
+    text-align: left;
+    margin: 5px;
+    font-family: arial, sans-serif;
+}
+
+#newDataSourceType{
+    margin-top: 9px; 
+    width: 280px;
+    padding: 8px;
+}
+
+.float-center {
+    text-align: center;
+    position: absolute;
+    width: 100%;
+}
+
+.sidenav {
+    position: fixed;
+    text-align: center;
+    width: 50px;
+    height: 230px;
+    top: 20%;
+    background-color: rgba(120, 120, 120, 0.5);
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    
+}
+
+.sidenav div {
+    margin: 5px 0;
+}
+
+.sidenav div:hover {
+    color: red;
+    /* background-color: blue; */
+}
+
+#cs-dropdown {
+    overflow-y: scroll;
+    height: 180px;
+}
+
+#myDropdown select {
+    height: 160px;
+}
+
+/* tooltips for sidenav icons */
+.sidenav-tab .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  white-space: nowrap;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 10px 10px;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  /* other */
+  font-size: 16px;
+  left: 55px;
+}
+
+.sidenav-tab:hover .tooltiptext {
+  visibility: visible;
+}
+
+.sidenav-tab .tooltiptext::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  right: 100%; /* To the left of the tooltip */
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent black transparent transparent;
+}
+
+/* tooltips for coordinate systems */
+.cs-option .tooltiptext {
+  visibility: hidden;
+  width: auto;
+  white-space: nowrap;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 10px 10px;
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  /* other */
+  font-size: 16px;
+  left: 55px;
+}
+
+.cs-option:hover .tooltiptext {
+  visibility: visible;
+}
+
+.cs-option .tooltiptext::after {
+  content: " ";
+  position: absolute;
+  top: 50%;
+  right: 100%; /* To the left of the tooltip */
+  margin-top: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent black transparent transparent;
+}
+
+/* query render */
+.renderQuery{
+  text-align: left;
+  display: block;
+  background-color: rgba(88, 88, 88, 0.2);
+  
+  padding: 0px 20px 20px 20px;
+  font-family: monospace
+}
+
+/* layout of table */
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.loadedGeometryTable a {
+  /* color:rgb(90, 90, 214); */
+  font-style: italic;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  /* background-color: #dddddd; */
+  background-color: rgb(221,221,221, 0.7);
+  color: black;
+}
+
+tr:nth-child(odd) {
+  color: white;
+}
+
+tr:nth-child(even) a {
+  color: black;
+}
+
+tr:nth-child(odd) a {
+  color: white;
+}
+
+th{
+  /* background-color: rgb(92, 92, 92); */
+  background-color: rgba(0,0,0, 0.3);
 }

@@ -1,31 +1,222 @@
 
 <html lang="en">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-      <title>FOG demo app</title>
-      <link rel="stylesheet" href="styling.css">
-    </head>
-    <body>
-      <div id="info">
-        <a href="https://w3id.org/fog#" target="_blank" rel="noopener">FOG ontology</a>
-        - <span class="link" id="view_query">view active query</span>
-        - <span class="link" id="query1">launch query 1</span>
-        - <span class="link" id="query2">launch query 2</span>
-        - <span class="link" id="query3">launch query 3</span>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>FOG demo app</title>
+    <!-- font awesome: icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+    <!-- own styling -->
+    <link rel="stylesheet" href="styling.css">
+  </head>
+  <body>
+    <!-- side buttons -->
+    <div class="sidenav">
+      <div class="sidenav-tab" onclick="openNav( 'introNav' )">
+        <i class="fa fa-book" style="font-size:30px;"><span class="tooltiptext">introduction</span></i>
       </div>
-      <div id="spinner"></div>
-      <!--  Our code  -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
-      <script src="https://rdf.js.org/comunica-browser/versions/latest/packages/actor-init-sparql/comunica-browser.js"></script>
-      <script src="js/threejs/TrackballControls.js"></script>
-      <script src="js/datgui.js"></script>
-      <script src="js/spin.js"></script>
-      <script src="js/threejs/OBJLoader.js"></script>
-      <script src="js/threejs/GLTFLoader.js"></script>
-      <script src="js/threejs/ColladaLoader.js"></script>       
-      <script src="js/threejs/PLYLoader.js"></script>  
-      <script src="js/threejs/PCDLoader.js"></script>
-      <script src="three-ld.js"></script>
-    </body>
+      <div class="sidenav-tab" onclick="openNav( 'sourcesNav' )">
+        <i class="fa fa-cubes" style="font-size:30px;"><span class="tooltiptext">select and edit Linked Data sources</span></i>
+      </div>
+      <div class="sidenav-tab" onclick="openNav( 'sparqlNav' )">
+        <i class="fa fa-filter" style="font-size:30px;"><span class="tooltiptext">show current SPARQL queries</span></i>
+      </div>
+      <div class="sidenav-tab" onclick="arrangeGeometryQuery()">
+        <i class="fa fa-play" style="font-size:30px;"><span class="tooltiptext">launch query for geometry</span></i>
+      </div>
+      <div class="sidenav-tab" onclick="openNav( 'settingsNav' )">
+        <i class="fa fa-cogs" style="font-size:30px;"><span class="tooltiptext">settings and overview of loaded geometry</span></i>
+      </div>
+    </div>
+
+    <!-- coordinate systems selector button and dropdown options -->
+    <div class="float-center">
+      <div class="dropdown">
+        <button class="dropbtn" id="cs-dropdownbtn"><i class="fa fa-caret-down" style="font-size:20px;"></i>&nbsp&nbsp Select Coordinate System</button>
+        <div class="dropdown-content" id="cs-dropdown"></div>
+      </div>
+    </div>
+
+    <!-- curtain menu 1: app introduction text -->
+    <!-- inspiration: https://www.w3schools.com/howto/howto_js_curtain_menu.asp  -->
+    <div id="introNav" class="overlay">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeNav( 'introNav' )">&times;</a>
+      <div class="overlay-content">
+        <div class="overlay-text">
+          <h1>Web application introduction</h1>
+          The web application you're about to explore is made to demonstrate how disparate RDF datasets containing geometry descriptions can be used. 
+          Terminology from the <a href="https://w3id.org/gom#" target="_blank" rel="noopener">GOM</a>, <a href="https://w3id.org/fog#" target="_blank" rel="noopener">FOG</a> and <a href="https://w3id.org/omg#" target="_blank" rel="noopener">OMG</a> ontologies is used to create the example RDF datasets.
+          The app currently only supports <a href="https://w3id.org/omg#level2" target="_blank" rel="noopener">OMG Level 2</a> linking patterns (click <i class="fa fa-filter" style="font-size:16px;"></i> from the side navigation bar to inspect the SPARQL queries implemented by this web application ), but could be expanded in the future to also support <a href="https://w3id.org/omg#level1" target="_blank" rel="noopener">OMG Level 1</a> and <a href="https://w3id.org/omg#level3" target="_blank" rel="noopener">OMG Level 3</a> patterns.</br></br>
+
+          <i class="fa fa-exclamation-triangle" style="font-size:16px;"></i> <b>Note</b>: the web application has been tested in Google Chrome and Mozilla Firefox. It might trigger errors in other browsers such as Apple Safari, Microsoft Internet Explorer or Microsoft Edge.
+
+          <h2>How to use this web application</h2>
+          Please follow these steps to query RDF datasources and visualize the retrieved geometry descriptions:
+          <ol>
+            <li><i>Optional</i>: click <i class="fa fa-cubes" style="font-size:16px;"></i> from the side navigation bar. 
+              You can add new Linked Data sources and select the Linked Data sources you want to be considered by the web application. 
+              By default, three demo RDF datasets, as documented <a href="https://github.com/mathib/fog-ontology/tree/master/examples" target="_blank" rel="noopener">here</a>, are available for querying.
+              The <a href="https://github.com/comunica/comunica/tree/master/packages/actor-init-sparql" target="_blank" rel="noopener">Comunica query engine</a> used in this app can query online RDF files (Turtle, TriG, N-quads, N-triples, Notation3, JSON-LD), SPARQL endpoints 
+              and <a href="https://github.com/LinkedDataFragments/Server.js/" target="_blank" rel="noopener">Triple Pattern Fragment (TPF) servers</a> as long as no authentication is needed.
+              Of course, it is also possible to launch an RDF triplestore server with SPARQL endpoint or a TPF server on localhost.
+              If a geometry description, referenced from an RDF literal, is stored in a separate file, this file has to be retrievable via the web (e.g. hosted on Github or Dropbox (via shared link)).
+            </li>
+            <li><i>Optional</i>: click <i class="fa fa-filter" style="font-size:16px;"></i> from the side navigation bar to inspect the SPARQL queries implemented by this web application.</li>
+            <li>Click <i class="fa fa-play" style="font-size:16px;"></i> from the side navigation bar to start retrieving geometry descriptions from the selected datasets. </li>
+            <li>Select one of the available Coordinate Systems (CSs) from the dropdown list (top center) to "activate" it in the scene. 
+              All geometry descriptions in the active CS or in a CS connected to the active CS (via a valid affine transformation) are subsequently rendered by the geometry engine.
+            </li>
+            <li>If necessary, press the following keys to help you during the navigation in the 3D viewer:
+              <ul>
+                <li>"e": camera zoom extend and camera aligned to Z-up axis</li>
+                <li>"u": camera aligned to Z-up axis</li>
+                <li>"h": hide/show all geometry in the "active" CS except Nexus multiresolution meshes</li>
+                <li>"+": increase point size for point cloud rendering</li>
+                <li>"-": decrease point size for point cloud rendering</li>
+              </ul>
+            </li>
+            <li><i>Optional</i>: click <i class="fa fa-cogs" style="font-size:16px;"></i> from the side navigation bar to find an overview of the loaded geometry descriptions and their properties. There are also buttons to zoom extend, hide/show (if viewable in active CS) and download the geometry. You can click each column header to sort the column content.</li>
+          </ol>
+          <i class="fa fa-exclamation-triangle" style="font-size:16px;"></i> <b>Note</b>: The retrieved geometries from remote sources are rendered in the client browser. 
+          Depending on the size of the geometry descriptions in the selected datasets, a considerable amount of data might be exchanged. 
+          The loadable geometry in the three demo datasets has a total size of about 103.5 MB and are currently reloaded every time you press <i class="fa fa-play" style="font-size:16px;"></i> (the query launch button). 
+          The largest geometry descriptions however are included in the "contractor" dataset (~ 97 MB).
+
+          <h2>References</h2>
+          This web application is made and maintained by <a href="https://www.researchgate.net/profile/Mathias_Bonduel" target="_blank" rel="noopener">Mathias Bonduel</a> (KU Leuven) and is only meant for demoing the usage geometry in a Linked Data context. A large amount of optimization is still possible and errors might occur. The source code of the app resides in <a href="https://github.com/mathib/fog-demo-app" target="_blank" rel="noopener">this Github repository</a>.
+          The web application can process geometry descriptions made using the following three complementary ontologies: 
+          <ul>
+            <li>GOM (Geometry Metadata Ontology): <a href="https://w3id.org/gom#" target="_blank" rel="noopener">https://w3id.org/gom#</a></li>
+            <li>FOG (File Ontology for Geometry formats): <a href="https://w3id.org/fog#" target="_blank" rel="noopener">https://w3id.org/fog#</a></li>
+            <li>OMG (Ontology for Managing Geometry): <a href="https://w3id.org/omg#" target="_blank" rel="noopener">https://w3id.org/omg#</a></li>
+          </ul>
+
+          Several third party libraries were applied in this application:
+          <ul>
+            <li>Comunica SPARQL (Ghent University imec) for querying disparate Linked Data sources: <a href="https://github.com/comunica/comunica/tree/master/packages/actor-init-sparql" target="_blank" rel="noopener">https://github.com/comunica/comunica/tree/master/packages/actor-init-sparq</a> </li>
+            <li>three.js for rendering the geometry descriptions: <a href="https://github.com/mrdoob/three.js/" target="_blank" rel="noopener">https://github.com/mrdoob/three.js/</a></li>
+            <li>Nexus library (Visual Computing Library ISTI-CNR) for the creation and visualization of multiresolution 3D models (incl. three.js loader): <a href="https://github.com/cnr-isti-vclab/nexus" target="_blank" rel="noopener">https://github.com/cnr-isti-vclab/nexus</a> </li>
+            <li>Font Awesome for the icons used in the web application: <a href="https://fontawesome.com/" target="_blank" rel="noopener">https://fontawesome.com/</a> </li>
+            <li>spin.js for the waiting spinner: <a href="https://spin.js.org/" target="_blank" rel="noopener">https://spin.js.org/</a></li>
+          </ul>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- curtain menu 2: manage Comunica RDF sources -->
+    <!-- inspiration: https://www.w3schools.com/howto/howto_js_curtain_menu.asp  -->
+    <div id="sourcesNav" class="overlay">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeNav( 'sourcesNav' )">&times;</a>
+      <div class="overlay-content">
+        <!-- RDF source multiselect button -->
+        <div>
+          <div class="dropdown">
+            <button class="dropbtn"><i class="fa fa-caret-down" style="font-size:20px;"></i>&nbsp&nbsp Select dataset(s)</button>
+            <div class="dropdown-content" id="myDropdown"></div>
+          </div>
+        </div>
+        <!-- RDF source delete button -->
+        <div>
+          <button class="removeOptionbtn" type="button" onclick="removeDropdownOptions()"><i class="fa fa-trash" style="font-size:20px;"></i>&nbsp&nbsp Remove selected dataset(s)</button>
+        </div>
+        <!-- RDF source create: entry fields + add button -->
+        <div>
+          <div class="createNewDatasource">
+            <label for="newDataSourceName">Name of the dataset</label>
+            <input class="inputDataset" type="text" id="newDataSourceName" name="newDataSourceName" placeholder="my new SPARQL endpoint">
+            <label for="newDataSource">URL of endpoint or file</label>
+            <input class="inputDataset" type="text" id="newDataSource" name="newDataSource" placeholder="http://example.org/sparql">
+            <label for="newDataSourceType">Type of RDF source</label>
+            <select name="newDataSourceType" class="inputDataset" id="newDataSourceType">
+              <option value="file" selected="selected">Online RDF file</option>
+              <option value="sparql">SPARQL endpoint</option>
+              <option value="hypermedia">Triple Pattern Fragment (TPF) server</option>
+            </select>
+            <button class="addOptionbtn" type="button" onclick="addComunicaSource()"><i class="fa fa-plus" style="font-size:20px;"></i>&nbsp&nbsp Add new dataset</button>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- curtain menu 3: current SPARQL queries -->
+    <!-- inspiration: https://www.w3schools.com/howto/howto_js_curtain_menu.asp  -->
+    <div id="sparqlNav" class="overlay">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeNav( 'sparqlNav' )">&times;</a>
+      <div class="overlay-content">
+        <div class="overlay-text">
+          <h1>SPARQL queries</h1>
+          The following three SPARQL queries are used by this demo web application. Query 1 and 2 are launched every time the selection of Linked Data sources changes. Query 3 is executed when the user hits the "launch query for geometry" button from the side navigation bar.
+
+          <h2>Query 1: retrieve all named Coordinate Systems</h2>
+          <div class="renderQuery" id="query1"></div>
+          <h2>Query 2: check for unnamed Coordinate Systems</h2>
+          <div class="renderQuery" id="query2"></div>
+          <h2>Query 3: retrieve all geometry descriptions</h2>
+          <div>The query retrieves all geometry descriptions described having a known file size smaller than 100 MB (or an unknown file size; see second FILTER) using any of the supported geometry formats (see third FILTER using FOG properties). It also retrieves optional metadata regarding the building element it represents, the geometry type and the named Coordinate System connected to the geometry description.</br></br></div>
+          <div class="renderQuery" id="query3"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- curtain menu 4: overview of loaded geometry -->
+    <!-- inspiration: https://www.w3schools.com/howto/howto_js_curtain_menu.asp  -->
+    <div id="settingsNav" class="overlay">
+      <a href="javascript:void(0)" class="closebtn" onclick="closeNav( 'settingsNav' )">&times;</a>
+      <div class="overlay-content">
+        <div class="overlay-text">
+          <h1>Loaded geometry descriptions</h1>
+          <table id="loadedGeometryTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable( 0 , 'loadedGeometryTableBody' )">Building element or zone URI</th>
+                <th onclick="sortTable( 1 , 'loadedGeometryTableBody' )">Geometry URI</th>
+                <th onclick="sortTable( 2 , 'loadedGeometryTableBody' )">Geometry format</th>
+                <th onclick="sortTable( 3 , 'loadedGeometryTableBody' )">Literal datatype</th>
+                <th onclick="sortTable( 4 , 'loadedGeometryTableBody' )">Geometry type</th>
+                <th onclick="sortTable( 5 , 'loadedGeometryTableBody' )">Original CS</th>
+              </tr>
+            </thead>
+            <tbody id="loadedGeometryTableBody"></tbody>
+          </table>
+          <h1>Not loaded geometry descriptions</h1>
+          <table id="notLoadedGeometryTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable( 0 , 'notLoadedGeometryTableBody' )">Building element or zone URI</th>
+                <th onclick="sortTable( 1 , 'notLoadedGeometryTableBody' )">Geometry URI</th>
+                <th onclick="sortTable( 2 , 'notLoadedGeometryTableBody' )">Geometry format</th>
+                <th onclick="sortTable( 3 , 'notLoadedGeometryTableBody' )">Literal datatype</th>
+                <th onclick="sortTable( 4 , 'notLoadedGeometryTableBody' )">Geometry type</th>
+                <th onclick="sortTable( 5 , 'notLoadedGeometryTableBody' )">Original CS</th>
+              </tr>
+            </thead>
+            <tbody id="notLoadedGeometryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- spinner -->
+    <div id="spinner"></div>
+
+    <!-- loaded JS code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
+    <script src="https://rdf.js.org/comunica-browser/versions/latest/packages/actor-init-sparql/comunica-browser.js"></script>
+    <script src="js/threejs/TrackballControls.js"></script>
+    <script src="js/datgui.js"></script>
+    <script src="js/spin.js"></script>
+    <script src="js/threejs/OBJLoader.js"></script>
+    <script src="js/threejs/GLTFLoader.js"></script>
+    <script src="js/threejs/ColladaLoader.js"></script>       
+    <script src="js/threejs/PLYLoader.js"></script>  
+    <script src="js/threejs/PCDLoader.js"></script>
+    <script src="js/threejs/SVGLoader.js"></script>
+    <script src="js/threejs/GLTFExporter.js"></script>
+    <script src="js/nexus.js"></script>
+    <script src="js/nexus_three.js"></script>
+    <!--  Our code  -->
+    <script src="three-ld.js"></script>
+  </body>
 </html>
