@@ -103,6 +103,13 @@ SELECT DISTINCT ?cs ?to ?matrix WHERE {
 			gom:hasTransformationMatrix ?matrix .
 	}
 }`;
+// query to find the named CS of all geometry (without reasoning): no OPTIONAL (only unconnected coordinate systems)
+const _queryCSAllNamed_noOptional = `
+PREFIX gom: <https://w3id.org/gom#>
+
+SELECT DISTINCT ?cs WHERE {
+	?cs a gom:CartesianCoordinateSystem .
+}`;
 
 // query to find if geometry without named CS exists (without reasoning)
 const _queryCSUnnamed = `
@@ -942,7 +949,6 @@ function queryComunicaCS( sources ){
 	queryEngine
 	.query( _queryCSAllNamed ,	{ sources: sources } )    
 	.then( function ( result ) {
-		console.log(result) // debug
 		result.bindingsStream.on( 'data', function ( data ) { // for every result (stream) do:
 			var d = data.toObject();
 			addToCSList( d ); // add CS data to JSON - calculate connections - render results continuously
@@ -956,16 +962,29 @@ function queryComunicaCS( sources ){
 		// });
 	})
 	// somehow doesn't reacts
-	// .catch( ( err ) => {
-	// 	console.log( 'general error launched (querycomunicacs)')
-	// 	// check if unavailable sources => restart query
-	// 	if ( err.message.includes( 'Error requesting ') || err.message.includes( 'Could not retrieve ' ) ){
-	// 		var activeRdfSources = filterActiveSources( sources , err );
-	// 		if ( activeRdfSources.length > 0 ){
-	// 			queryComunicaCS( activeRdfSources );
-	// 		}
-	// 	}
-	// });
+	.catch( ( err ) => {
+		if ( err.message.includes( "are used in the projection result, but are not assigned." ) ){
+			queryEngine
+			.query( _queryCSAllNamed_noOptional , { sources: sources } )    
+			.then( function ( result ) {
+				result.bindingsStream.on( 'data', function ( data ) { // for every result (stream) do:
+					var d = data.toObject();
+					addToCSList( d ); // add CS data to JSON - calculate connections - render results continuously
+				});
+				result.bindingsStream.on( 'end' , () => { 
+					// calculateIndirectTransformations(); // can be skipped and directly to createDropdownCS()
+					createDropdownCS();
+				});
+			});
+		}
+		// check if unavailable sources => restart query
+		// if ( err.message.includes( 'Error requesting ') || err.message.includes( 'Could not retrieve ' ) ){
+		// 	var activeRdfSources = filterActiveSources( sources , err );
+		// 	if ( activeRdfSources.length > 0 ){
+		// 		queryComunicaCS( activeRdfSources );
+		// 	}
+		// }
+	});
 }
 
 async function queryComunicaGeometryWithoutCS( sources ){
@@ -1043,7 +1062,6 @@ function filterActiveSources( sources , err ){
 
 // add CS info to JSON file (cs URI, array of CS to: cs URI, transformation Matrix4)
 function addToCSList( d ){
-	console.log(d); //debug
 	var csName = d['?cs'].value; //full URI
 	// add cs
 	var newCS = {
