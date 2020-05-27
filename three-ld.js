@@ -100,7 +100,7 @@ SELECT DISTINCT ?cs ?to ?matrix WHERE {
 	OPTIONAL {
 		?transformation gom:fromCartesianCoordinateSystem ?cs ;
 			gom:toCartesianCoordinateSystem ?to ;
-			gom:hasMatrix ?matrix .
+			gom:hasTransformationMatrix ?matrix .
 	}
 }`;
 
