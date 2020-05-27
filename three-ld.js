@@ -407,6 +407,7 @@ function decodeGeometry( element ){
 				fileLoc = fileLoc.replace( 'blob/' , '' );
 			} else if ( v.includes( 'dropbox.com' ) ){ // modify regular Dropbox link to raw Dropbox link
 				fileLoc = fileLoc.replace( 'dropbox.com' , 'dl.dropboxusercontent.com' );
+				fileLoc = fileLoc.replace( '?dl=0' , '' );
 			}
 			switchGeometryType( geometryInfo , fileLoc );
 			break;
@@ -843,7 +844,16 @@ function addComunicaSource() {
 	var inputName = document.getElementById( 'newDataSourceName' ).value;
 	var input = document.getElementById( 'newDataSource' ).value;
 	var inputType = document.getElementById( 'newDataSourceType' ).value;
-	dropdownSources.push( { name: inputName , sourceType: inputType , value: input , online: true } );
+	// transform github and Dropbox URLs of RDF files to raw links
+	var fileLoc = input;
+	if ( input.includes( 'github.com' ) ){ // modify regular Github link to raw Github link
+		fileLoc = fileLoc.replace( 'github.com' , 'raw.githubusercontent.com' );
+		fileLoc = fileLoc.replace( 'blob/' , '' );
+	} else if ( input.includes( 'dropbox.com' ) ){ // modify regular Dropbox link to raw Dropbox link
+		fileLoc = fileLoc.replace( 'dropbox.com' , 'dl.dropboxusercontent.com' );
+		fileLoc = fileLoc.replace( '?dl=0' , '' );
+	}
+	dropdownSources.push( { name: inputName , sourceType: inputType , value: fileLoc , online: true } );
 	deleteDropdownSourcesSelect();
 	createDropdownSourcesSelect();
 	replaceCSDropdown();
@@ -932,6 +942,7 @@ function queryComunicaCS( sources ){
 	queryEngine
 	.query( _queryCSAllNamed ,	{ sources: sources } )    
 	.then( function ( result ) {
+		console.log(result) // debug
 		result.bindingsStream.on( 'data', function ( data ) { // for every result (stream) do:
 			var d = data.toObject();
 			addToCSList( d ); // add CS data to JSON - calculate connections - render results continuously
@@ -1032,6 +1043,7 @@ function filterActiveSources( sources , err ){
 
 // add CS info to JSON file (cs URI, array of CS to: cs URI, transformation Matrix4)
 function addToCSList( d ){
+	console.log(d); //debug
 	var csName = d['?cs'].value; //full URI
 	// add cs
 	var newCS = {
@@ -1358,11 +1370,14 @@ function querySelectedComunicaSources( sources ) {
 			result.bindingsStream.on( 'data', function( data ) { // for every result (stream) do:
 				decodeGeometry( data.toObject() );
 			});
-			result.bindingsStream.on( 'end' , () => {
-				spinner1.stop();
-				// generate tables with loaded and unloaded geometry
-				createTableGeometry( loadedGeometry , true );
-				createTableGeometry( notLoadedGeometry , false );
+			result.bindingsStream.on( 'end' , () => { // no more results from stream 
+				// geometry can still be in load process of web app => wait some additional seconds (better: wait until all loaded or recreate table everytime clicking "settings and overview" => openNav() with IF)
+				setTimeout(function(){
+					spinner1.stop();
+					// generate tables with loaded and unloaded geometry
+					createTableGeometry( loadedGeometry , true );
+					createTableGeometry( notLoadedGeometry , false );
+				}, 3000 ); // wait 3 sec
 			});
 			// somehow doesn't start
 			// result.bindingsStream.on( 'error' , ( err ) => console.error( err.message ) );
