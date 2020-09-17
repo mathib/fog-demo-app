@@ -962,29 +962,29 @@ function queryComunicaCS( sources ){
 		// });
 	})
 	// somehow doesn't reacts
-	.catch( ( err ) => {
-		if ( err.message.includes( "are used in the projection result, but are not assigned." ) ){
-			queryEngine
-			.query( _queryCSAllNamed_noOptional , { sources: sources } )    
-			.then( function ( result ) {
-				result.bindingsStream.on( 'data', function ( data ) { // for every result (stream) do:
-					var d = data.toObject();
-					addToCSList( d ); // add CS data to JSON - calculate connections - render results continuously
-				});
-				result.bindingsStream.on( 'end' , () => { 
-					// calculateIndirectTransformations(); // can be skipped and directly to createDropdownCS()
-					createDropdownCS();
-				});
-			});
-		}
-		// check if unavailable sources => restart query
-		// if ( err.message.includes( 'Error requesting ') || err.message.includes( 'Could not retrieve ' ) ){
-		// 	var activeRdfSources = filterActiveSources( sources , err );
-		// 	if ( activeRdfSources.length > 0 ){
-		// 		queryComunicaCS( activeRdfSources );
-		// 	}
-		// }
-	});
+	// .catch( ( err ) => {
+	// 	if ( err.message.includes( "are used in the projection result, but are not assigned." ) ){
+	// 		queryEngine
+	// 		.query( _queryCSAllNamed_noOptional , { sources: sources } )    
+	// 		.then( function ( result ) {
+	// 			result.bindingsStream.on( 'data', function ( data ) { // for every result (stream) do:
+	// 				var d = data.toObject();
+	// 				addToCSList( d ); // add CS data to JSON - calculate connections - render results continuously
+	// 			});
+	// 			result.bindingsStream.on( 'end' , () => { 
+	// 				// calculateIndirectTransformations(); // can be skipped and directly to createDropdownCS()
+	// 				createDropdownCS();
+	// 			});
+	// 		});
+	// 	}
+	// 	// check if unavailable sources => restart query
+	// 	// if ( err.message.includes( 'Error requesting ') || err.message.includes( 'Could not retrieve ' ) ){
+	// 	// 	var activeRdfSources = filterActiveSources( sources , err );
+	// 	// 	if ( activeRdfSources.length > 0 ){
+	// 	// 		queryComunicaCS( activeRdfSources );
+	// 	// 	}
+	// 	// }
+	// });
 }
 
 async function queryComunicaGeometryWithoutCS( sources ){
